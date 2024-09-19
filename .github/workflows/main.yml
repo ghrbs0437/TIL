@@ -1,0 +1,43 @@
+name: Sync to Group-TIL
+  
+on:
+  push:
+    branches:
+      - main  # main 브랜치에 푸시될 때 트리거
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+      contents: write
+  
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3  # 레포지토리의 코드를 체크아웃
+  
+      - name: Set up Git
+        run: |
+          git config --global user.name "YHK[BOT]"
+          git config --global user.email "YHK[BOT]@no.reply"
+          
+      - name: create Output
+        run: |
+          mkdir output 
+          ls -al
+          # cp -r ./ ./output/
+          rsync -av --exclude='.*/' --exclude='./output/' ./ ./output
+          
+      - name: Pushes to another repository
+        id: push_directory
+        uses: cpina/github-action-push-to-another-repository@main
+        env:
+          API_TOKEN_GITHUB: ${{ secrets.AUTO_TIL_PUSH }}
+        with:
+          source-directory: 'output'
+          destination-github-username: 'TIL-challenge'
+          destination-repository-name: 'HoKyun'
+          user-email: ${{ secrets.OFFICIAL_ACCOUNT_EMAIL }}
+          commit-message: ${{ github.event.commits[0].message }}
+          target-branch: 'main'
